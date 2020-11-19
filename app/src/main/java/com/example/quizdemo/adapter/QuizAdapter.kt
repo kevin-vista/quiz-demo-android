@@ -1,5 +1,6 @@
 package com.example.quizdemo.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,18 +9,22 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.annotation.Dimension.SP
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.example.quizdemo.R
-import com.example.quizdemo.entity.Quiz
+import com.example.quizdemo.entity.Answer
 
-class QuizAdapter(private val quizList: List<Quiz>) :
+class QuizAdapter(private val answerList: List<Answer>) :
 	RecyclerView.Adapter<QuizAdapter.ViewHolder>() {
 
 	companion object {
+		const val TAG = "QuizAdapter"
 		const val VIEW_TYPE = 7849
+		const val BIAS_GROUP = 10_000
+		const val BIAS_BUTTON = 1_000
 	}
 
-	private val checkedIndexes = HashMap<Int, Int>(quizList.size)
+//	private val checkedIndexes = HashMap<Int, Int>(quizList.size)
 
 	inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val textViewQuestion: TextView = view.findViewById(R.id.textViewQuestion)
@@ -34,23 +39,25 @@ class QuizAdapter(private val quizList: List<Quiz>) :
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		val realPosition = holder.layoutPosition
-		val quiz = quizList[realPosition]
+		val answer = answerList[realPosition]
 
 		holder.apply {
-			val questionText = "${realPosition+1}. ${quiz.question}"
+			val questionText = "${realPosition+1}. ${answer.question}"
 			textViewQuestion.text = questionText
 
-			radioGroupOptions.id = realPosition + 10_000
+			radioGroupOptions.id = realPosition + BIAS_GROUP
 			radioGroupOptions.removeAllViews()
 			radioGroupOptions.setOnCheckedChangeListener { _, checkedId ->
-				if (checkedId >= 0)
-					checkedIndexes[realPosition] = checkedId
+				if (checkedId >= 0) {
+//					checkedIndexes[realPosition] = checkedId
+					answer.checkedIndex = checkedId - BIAS_BUTTON
+				}
 			}
 
 			// Add choices
-			for (i in quiz.optionList.indices) {
+			for (i in answer.optionList.indices) {
 				val radioButtonOption = RadioButton(holder.itemView.context).apply {
-					id = i + 1_000
+					id = i + BIAS_BUTTON
 					layoutParams = RadioGroup.LayoutParams(
 						LayoutParams.MATCH_PARENT,
 						LayoutParams.WRAP_CONTENT
@@ -58,22 +65,31 @@ class QuizAdapter(private val quizList: List<Quiz>) :
 						topMargin = 2
 						bottomMargin = 2
 					}
-					setTextSize(SP, 16F)
-					text = quiz.optionList[i]
+
+					setTextSize(SP, 18F)
+					text = answer.optionList[i]
 				}
 				radioGroupOptions.addView(radioButtonOption)
 			}
+			/*
 			if (realPosition in checkedIndexes.keys) {
 				radioGroupOptions.clearCheck()
 				val checkedIndex: Int = checkedIndexes[realPosition]!!
 				radioGroupOptions.check(checkedIndex)
 			}
+			*/
+			if (answer.checkedIndex >= 0) {
+				radioGroupOptions.clearCheck()
+				val checkedIndex = answer.checkedIndex + BIAS_BUTTON
+				radioGroupOptions.check(checkedIndex)
+			}
 		}
 	}
 
-	override fun getItemCount(): Int = quizList.size
+	override fun getItemCount(): Int = answerList.size
 
 	override fun getItemViewType(position: Int): Int {
+		Log.d(TAG, "getItemViewType")
 		return VIEW_TYPE
 	}
 }

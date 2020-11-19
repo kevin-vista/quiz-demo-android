@@ -40,8 +40,10 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="20dp"
                 android:layout_marginEnd="8dp"
+                android:layout_marginBottom="3dp"
+                app:layout_constraintBottom_toTopOf="@id/barrierOptionAndScore"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textViewQuestion" />
@@ -53,12 +55,20 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="8dp"
                 android:minLines="3"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toEndOf="@+id/textViewQuestion"
                 app:layout_constraintStart_toStartOf="@+id/textViewQuestion"
-                app:layout_constraintTop_toBottomOf="@+id/radioGroupOptions"
+                app:layout_constraintTop_toBottomOf="@id/barrierOptionAndScore"
                 tools:text="本题答案:  李白\n我的选项:  李白\n本题得分:  1.0/1.0" />
+
+            <androidx.constraintlayout.widget.Barrier
+                android:id="@+id/barrierOptionAndScore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:barrierDirection="bottom"
+                app:constraint_referenced_ids="radioGroupOptions"
+                tools:layout_editor_absoluteY="42dp" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>

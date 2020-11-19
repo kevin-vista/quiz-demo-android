@@ -1,5 +1,6 @@
 package com.example.quizdemo.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,7 +16,12 @@ import com.example.quizdemo.entity.Answer
 class ResultAdapter(private val answerList: List<Answer>) :
 	RecyclerView.Adapter<ResultAdapter.ViewHolder>() {
 
-	private val checkedIndexes = HashMap<Int, Int>(answerList.size)
+	companion object {
+		const val TAG = "ResultAdapter"
+		const val BIAS_GROUP = 10_000
+	}
+
+//	private val checkedIndexes = HashMap<Int, Int>(answerList.size)
 
 	inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val textViewQuestion: TextView = view.findViewById(R.id.textViewQuestion)
@@ -31,17 +37,17 @@ class ResultAdapter(private val answerList: List<Answer>) :
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		val realPosition = holder.layoutPosition
+//		Log.i(TAG, answerList[realPosition]::class.java.toString())
 		val answer = answerList[realPosition]
+		Log.i(TAG, answer.toString())
 
 		holder.apply {
 			val questionText = "${realPosition+1}. ${answer.question}"
 			textViewQuestion.text = questionText
 
 			radioGroupOptions.apply {
-				id = realPosition + 10_000
+				id = realPosition + BIAS_GROUP
 				removeAllViews()
-				// Results should be readonly
-				isEnabled = false
 			}
 
 			// Add choices
@@ -55,8 +61,13 @@ class ResultAdapter(private val answerList: List<Answer>) :
 						topMargin = 2
 						bottomMargin = 2
 					}
-					setTextSize(SP, 16F)
+
+					// Results should be readonly
+					isClickable = false
+
+					setTextSize(SP, 18F)
 					text = answer.optionList[i]
+
 					// Set button color
 					if (i == answer.correctIndex) {
 						buttonTintList = AppCompatResources.getColorStateList(
@@ -67,7 +78,7 @@ class ResultAdapter(private val answerList: List<Answer>) :
 					} else if (i == answer.checkedIndex) {
 						buttonTintList = AppCompatResources.getColorStateList(
 							holder.itemView.context,
-							R.color.tint_checked
+							R.color.tint_checked_wrong
 						)
 						isChecked = true
 					}
@@ -81,7 +92,12 @@ class ResultAdapter(private val answerList: List<Answer>) :
 				0.0
 			}
 			val textCorrect = answer.optionList[answer.correctIndex]
-			val textChecked = answer.optionList[answer.checkedIndex]
+
+			val textChecked =
+				if (answer.checkedIndex >= 0)
+					answer.optionList[answer.checkedIndex]
+				else
+					itemView.context.getString(R.string.not_answered)
 			val textScore = "本题答案:  $textCorrect\n我的选项:  $textChecked\n本题得分:  $score/1.0"
 			textViewScore.text = textScore
 		}
