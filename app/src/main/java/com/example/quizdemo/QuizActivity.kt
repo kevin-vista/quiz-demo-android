@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.quizdemo.adapter.QuizAdapter
 import com.example.quizdemo.entity.Answer
+import com.example.quizdemo.util.isCompleted
 import kotlinx.android.synthetic.main.activity_quiz.*
 import kotlinx.android.synthetic.main.content_quiz.*
 

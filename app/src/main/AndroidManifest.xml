@@ -3,22 +3,34 @@
     package="com.example.quizdemo">
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.QuizDemo">
-        <activity android:name=".ResultActivity"></activity>
+        <activity android:name=".MainActivity">
+        </activity>
+        <activity android:name=".QuizCollectionActivity" />
         <activity
-            android:name=".QuizActivity"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.QuizDemo.NoActionBar">
+            android:name=".SignUpActivity"
+            android:label="@string/label_sign_up"
+            android:parentActivityName=".SignInActivity"
+            android:theme="@style/Theme.QuizDemo.NoActionBar" />
+        <activity android:name=".SignInActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".ResultActivity"
+            android:parentActivityName=".QuizActivity" />
+        <activity
+            android:name=".QuizActivity"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.QuizDemo.NoActionBar">
         </activity>
     </application>
 
