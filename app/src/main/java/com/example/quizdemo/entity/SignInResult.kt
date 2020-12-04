@@ -11,6 +11,7 @@ class SignInResult(
 		const val SUCCESS = "登录成功"
 		const val FAILURE_NO_SUCH_USER = "用户名不存在"
 		const val FAILURE_WRONG_PASSWORD = "用户名和密码不匹配"
+		const val FAILURE_NETWORK = "网络连接错误"
 	}
 
 	override fun equals(other: Any?): Boolean {

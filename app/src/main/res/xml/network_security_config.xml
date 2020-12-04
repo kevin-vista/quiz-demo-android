@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+
+    <base-config
+        tools:ignore="InsecureBaseConfiguration"
+        cleartextTrafficPermitted="true" />
+
+</network-security-config>

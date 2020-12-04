@@ -3,10 +3,20 @@ package com.example.quizdemo
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import com.example.quizdemo.SignInActivity.Companion.KEY_USERNAME
+import com.example.quizdemo.entity.SignUpRequest
 import com.example.quizdemo.entity.SignUpResult
+import com.example.quizdemo.service.UserService
 import com.example.quizdemo.util.isLegalUsername
 import kotlinx.android.synthetic.main.activity_sign_up.*
+import kotlinx.coroutines.*
+import retrofit2.HttpException
+import retrofit2.Retrofit
+import retrofit2.await
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.create
 
 class SignUpActivity : AppCompatActivity() {
 
@@ -21,12 +31,22 @@ class SignUpActivity : AppCompatActivity() {
 			SignUpResult.FAILURE_DUPLICATE_USERNAME
 		)
 
+		const val TAG = "SignUpActivity"
+
+		const val BASE_URL = "http://10.0.2.2:8081"
 		const val KEY_REASON = "result"
 	}
+
+	private val job = Job()
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_sign_up)
+
+		// Toolbar Configurations
+		setSupportActionBar(findViewById(R.id.toolbarSignUp))
+		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+		supportActionBar?.setDisplayShowHomeEnabled(true)
 
 		// Fill username if possible
 		val intent = intent
@@ -34,14 +54,12 @@ class SignUpActivity : AppCompatActivity() {
 			editTextUsername.setText(intent.getStringExtra(KEY_USERNAME))
 		}
 
-		// Toolbar Configurations
-		setSupportActionBar(findViewById(R.id.toolbarSignUp))
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
-		supportActionBar?.setDisplayShowHomeEnabled(true)
-
 		editTextUsername.setOnFocusChangeListener { _, hasFocus ->
 			if (!hasFocus) {
-				checkUsernameLegality()
+				val username = editTextUsername.text.toString()
+				if (!username.isLegalUsername()) {
+					editTextUsername.error = getString(R.string.error_illegal_username)
+				}
 			}
 		}
 		editTextPassword2.setOnFocusChangeListener { _, hasFocus ->
@@ -55,17 +73,14 @@ class SignUpActivity : AppCompatActivity() {
 			val password2 = editTextPassword2.text.toString()
 
 			if (username.isBlank()) {
-				editTextUsername.requestFocus()
 				editTextUsername.error = getString(R.string.prompt_enter_username)
 				return@setOnClickListener
 			}
 			if (password.isBlank()) {
-				editTextPassword.requestFocus()
 				editTextPassword.error = getString(R.string.prompt_enter_password)
 				return@setOnClickListener
 			}
 			if (password2.isBlank()) {
-				editTextPassword2.requestFocus()
 				editTextPassword2.error = getString(R.string.prompt_enter_password2)
 				return@setOnClickListener
 			}
@@ -73,39 +88,51 @@ class SignUpActivity : AppCompatActivity() {
 				return@setOnClickListener
 			}
 
-			val signUpResult = signUp(username, password)
-			if (signUpResult.successful) {
-				val backIntent = Intent()
-				backIntent.putExtra(KEY_USERNAME, username)
-				backIntent.putExtra(KEY_REASON, signUpResult.reason)
-				setResult(RESULT_OK, backIntent)
-				finish()
-			}
+			// Sign up
+			CoroutineScope(job).launch {
+				val signUpResult = signUp(username, password)
+				withContext(Dispatchers.Main) {
+					Log.i(TAG, signUpResult.toString())
+					if (signUpResult.successful) {
+						val backIntent = Intent()
+						backIntent.putExtra(KEY_USERNAME, username)
+						backIntent.putExtra(KEY_REASON, signUpResult.reason)
+						setResult(RESULT_OK, backIntent)
+						Log.i(TAG, "finished")
+						finish()
+					} else {
+						Toast.makeText(
+							this@SignUpActivity,
+							signUpResult.reason,
+							Toast.LENGTH_SHORT
+						).show()
+					}
+				}
+			}  // CoroutineScope
+		}  // buttonSignUp.onClickListener
+	}  // onCreate
+
+	/**
+	 * Send sign up request to backend server
+	 * @return a `SignUpResult` instance
+	 */
+	private suspend fun signUp(username: String, password: String): SignUpResult {
+		val retrofit = Retrofit.Builder()
+			.baseUrl(BASE_URL)
+			.addConverterFactory(GsonConverterFactory.create())
+			.build()
+		val userService = retrofit.create<UserService>()
+		return try {
+			userService.signUp(SignUpRequest(username, password)).await()
+		} catch (e: HttpException) {
+			SignUpResult(false, SignUpResult.FAILURE_NETWORK)
 		}
-	}
-
-	private fun signUp(username: String, password: String): SignUpResult {
-		// TODO Send request using Retrofit
-
-		val signUpResult = DEBUG_RESULT_SUCCESS
-		return signUpResult
-	}
-
-	private fun checkUsernameLegality(): Boolean {
-		val username = editTextUsername.text.toString()
-		if (!username.isLegalUsername()) {
-			editTextUsername.requestFocus()
-			editTextUsername.error = getString(R.string.error_illegal_username)
-			return false
-		}
-		return true
 	}
 
 	private fun checkPasswordConsistency(): Boolean {
 		val password = editTextPassword.text.toString()
 		val password2 = editTextPassword2.text.toString()
 		if (password != password2) {
-			editTextPassword2.requestFocus()
 			editTextPassword2.error = getString(R.string.error_password_inconsistent)
 			return false
 		}

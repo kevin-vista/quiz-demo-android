@@ -9,7 +9,7 @@
     <string name="prompt_enter_password2">请重复输入密码</string>
     <string name="title_sign_up">创建账户</string>
     <string name="text_sign_up">注册账户</string>
-    <string name="error_illegal_username">用户名仅可包含字母、数字、下划线</string>
+    <string name="error_illegal_username">用户名仅可包含字母、数字、下划线，长度为4–32字符</string>
     <string name="error_password_inconsistent">两次输入的密码不一致</string>
     <string name="label_sign_up">注册</string>
     <string name="button_sign_up">注 册</string>

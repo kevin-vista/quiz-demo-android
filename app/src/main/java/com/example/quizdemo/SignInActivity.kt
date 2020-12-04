@@ -5,9 +5,19 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import com.example.quizdemo.SignUpActivity.Companion.KEY_REASON
+import com.example.quizdemo.entity.SignInRequest
 import com.example.quizdemo.entity.SignInResult
+import com.example.quizdemo.entity.SignUpRequest
+import com.example.quizdemo.entity.SignUpResult
+import com.example.quizdemo.service.UserService
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_sign_in.*
+import kotlinx.coroutines.*
+import retrofit2.HttpException
+import retrofit2.Retrofit
+import retrofit2.await
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.create
 
 class SignInActivity : AppCompatActivity() {
 
@@ -27,6 +37,8 @@ class SignInActivity : AppCompatActivity() {
 
 		const val REQUEST_CODE_SIGN_IN = 46
 	}
+
+	private val job = Job()
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -57,18 +69,25 @@ class SignInActivity : AppCompatActivity() {
 			}
 
 			// Sign in
-			val signInResult = signIn(username, password)
-			if (signInResult.successful) {
-				Toast.makeText(this, signInResult.reason, Toast.LENGTH_SHORT).show()
-				startActivity(Intent(this, MainActivity::class.java))
-			} else {
-				Snackbar.make(
-					constraintLayoutSignIn,
-					signInResult.reason,
-					Snackbar.LENGTH_SHORT
-				).show()
-			}
-		}
+			CoroutineScope(job).launch {
+				val signInResult = signIn(username, password)
+				withContext(Dispatchers.Main) {
+					if (signInResult.successful) {
+						Toast.makeText(this@SignInActivity,
+							signInResult.reason,
+							Toast.LENGTH_SHORT
+						).show()
+						startActivity(Intent(this@SignInActivity, MainActivity::class.java))
+					} else {
+						Toast.makeText(
+							this@SignInActivity,
+							signInResult.reason,
+							Toast.LENGTH_SHORT
+						).show()
+					}
+				}
+			}  // CoroutineScope
+		}  // buttonSignIn.onClickListener
 		textViewSignUp.setOnClickListener {
 			val signUpIntent = Intent(this, SignUpActivity::class.java)
 			if (editTextUsername.text.toString().isNotBlank()) {
@@ -114,11 +133,26 @@ class SignInActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun signIn(username: String, password: String): SignInResult {
-		// TODO Send request using Retrofit
+	override fun onDestroy() {
+		super.onDestroy()
+		job.cancel(null)
+	}
 
-		val result = DEBUG_RESULT_SUCCESS
-		return result
+	/**
+	 * Send sign in request to backend server
+	 * @return a `SignInResult` instance
+	 */
+	private suspend fun signIn(username: String, password: String): SignInResult {
+		val retrofit = Retrofit.Builder()
+			.baseUrl(SignUpActivity.BASE_URL)
+			.addConverterFactory(GsonConverterFactory.create())
+			.build()
+		val userService = retrofit.create<UserService>()
+		return try {
+			userService.signIn(SignInRequest(username, password)).await()
+		} catch (e: HttpException) {
+			SignInResult(false, SignInResult.FAILURE_NETWORK)
+		}
 	}
 
 }

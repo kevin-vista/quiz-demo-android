@@ -9,7 +9,9 @@ class SignUpResult(
 
 	companion object {
 		const val SUCCESS = "账户创建成功"
+		const val FAILURE_ILLEGAL_USERNAME = "用户名不合法"
 		const val FAILURE_DUPLICATE_USERNAME = "此用户名已被占用"
+		const val FAILURE_NETWORK = "网络连接错误"
 	}
 
 	override fun equals(other: Any?): Boolean {
