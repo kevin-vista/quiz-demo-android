@@ -9,12 +9,11 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.annotation.Dimension.SP
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.example.quizdemo.R
-import com.example.quizdemo.entity.Answer
+import com.example.quizdemo.entity.AnsweredQuiz
 
-class QuizAdapter(private val answerList: List<Answer>) :
+class QuizAdapter(private val answeredQuizList: List<AnsweredQuiz>) :
 	RecyclerView.Adapter<QuizAdapter.ViewHolder>() {
 
 	companion object {
@@ -23,8 +22,6 @@ class QuizAdapter(private val answerList: List<Answer>) :
 		const val BIAS_GROUP = 10_000
 		const val BIAS_BUTTON = 1_000
 	}
-
-//	private val checkedIndexes = HashMap<Int, Int>(quizList.size)
 
 	inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val textViewQuestion: TextView = view.findViewById(R.id.textViewQuestion)
@@ -39,7 +36,7 @@ class QuizAdapter(private val answerList: List<Answer>) :
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		val realPosition = holder.layoutPosition
-		val answer = answerList[realPosition]
+		val answer = answeredQuizList[realPosition]
 
 		holder.apply {
 			val questionText = "${realPosition+1}. ${answer.question}"
@@ -49,7 +46,6 @@ class QuizAdapter(private val answerList: List<Answer>) :
 			radioGroupOptions.removeAllViews()
 			radioGroupOptions.setOnCheckedChangeListener { _, checkedId ->
 				if (checkedId >= 0) {
-//					checkedIndexes[realPosition] = checkedId
 					answer.checkedIndex = checkedId - BIAS_BUTTON
 				}
 			}
@@ -71,13 +67,6 @@ class QuizAdapter(private val answerList: List<Answer>) :
 				}
 				radioGroupOptions.addView(radioButtonOption)
 			}
-			/*
-			if (realPosition in checkedIndexes.keys) {
-				radioGroupOptions.clearCheck()
-				val checkedIndex: Int = checkedIndexes[realPosition]!!
-				radioGroupOptions.check(checkedIndex)
-			}
-			*/
 			if (answer.checkedIndex >= 0) {
 				radioGroupOptions.clearCheck()
 				val checkedIndex = answer.checkedIndex + BIAS_BUTTON
@@ -86,7 +75,7 @@ class QuizAdapter(private val answerList: List<Answer>) :
 		}
 	}
 
-	override fun getItemCount(): Int = answerList.size
+	override fun getItemCount(): Int = answeredQuizList.size
 
 	override fun getItemViewType(position: Int): Int {
 		Log.d(TAG, "getItemViewType")

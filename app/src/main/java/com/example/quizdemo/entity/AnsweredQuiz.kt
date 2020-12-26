@@ -1,11 +1,9 @@
 package com.example.quizdemo.entity
 
-import android.os.Parcel
-import android.os.Parcelable
 import java.io.Serializable
-import java.util.ArrayList
+import java.util.*
 
-class Answer(
+class AnsweredQuiz(
 	question: String,
 	optionList: ArrayList<String>,
 	correctIndex: Int,

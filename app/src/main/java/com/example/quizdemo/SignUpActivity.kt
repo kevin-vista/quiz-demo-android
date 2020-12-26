@@ -1,7 +1,6 @@
 package com.example.quizdemo
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -12,13 +11,13 @@ import com.example.quizdemo.service.UserService
 import com.example.quizdemo.util.isLegalUsername
 import kotlinx.android.synthetic.main.activity_sign_up.*
 import kotlinx.coroutines.*
-import retrofit2.HttpException
 import retrofit2.Retrofit
 import retrofit2.await
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
+import java.io.IOException
 
-class SignUpActivity : AppCompatActivity() {
+class SignUpActivity : BaseActivity() {
 
 	companion object {
 		// For debug use only
@@ -32,8 +31,6 @@ class SignUpActivity : AppCompatActivity() {
 		)
 
 		const val TAG = "SignUpActivity"
-
-		const val BASE_URL = "http://10.0.2.2:8081"
 		const val KEY_REASON = "result"
 	}
 
@@ -104,7 +101,7 @@ class SignUpActivity : AppCompatActivity() {
 						Toast.makeText(
 							this@SignUpActivity,
 							signUpResult.reason,
-							Toast.LENGTH_SHORT
+							Toast.LENGTH_LONG
 						).show()
 					}
 				}
@@ -118,14 +115,19 @@ class SignUpActivity : AppCompatActivity() {
 	 */
 	private suspend fun signUp(username: String, password: String): SignUpResult {
 		val retrofit = Retrofit.Builder()
-			.baseUrl(BASE_URL)
+			.baseUrl(getString(R.string.base_url))
 			.addConverterFactory(GsonConverterFactory.create())
 			.build()
 		val userService = retrofit.create<UserService>()
 		return try {
 			userService.signUp(SignUpRequest(username, password)).await()
-		} catch (e: HttpException) {
-			SignUpResult(false, SignUpResult.FAILURE_NETWORK)
+		} catch (e: IOException) {
+			var reason = SignUpResult.FAILURE_NETWORK
+			val message = e.localizedMessage
+			if (message != null) {
+				reason += ": $message"
+			}
+			SignUpResult(false, reason)
 		}
 	}
 

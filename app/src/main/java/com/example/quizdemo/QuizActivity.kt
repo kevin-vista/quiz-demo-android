@@ -8,44 +8,60 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.quizdemo.adapter.QuizAdapter
-import com.example.quizdemo.entity.Answer
+import com.example.quizdemo.entity.AnsweredQuiz
+import com.example.quizdemo.entity.Quiz
+import com.example.quizdemo.service.CollectionService
 import com.example.quizdemo.util.isCompleted
 import kotlinx.android.synthetic.main.activity_quiz.*
 import kotlinx.android.synthetic.main.content_quiz.*
+import kotlinx.coroutines.*
+import retrofit2.Retrofit
+import retrofit2.await
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.create
+import java.io.IOException
 
-class QuizActivity : AppCompatActivity() {
+class QuizActivity : BaseActivity() {
 
 	companion object {
 		const val TAG = "QuizActivity"
 		const val KEY_ANSWER_LIST = "answerList"
-		const val TOOL_TIP_TEXT_SUBMIT = "提交答案"
 	}
 
-	private val answerList = ArrayList<Answer>()
+	private val job = Job()
+
+	private val answerList = ArrayList<AnsweredQuiz>()
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_quiz)
-		setSupportActionBar(findViewById(R.id.toolbar))
+		setSupportActionBar(findViewById(R.id.toolbarQuiz))
 
 		if (savedInstanceState?.containsKey(KEY_ANSWER_LIST) == true) {
-			answerList += savedInstanceState.getSerializable(KEY_ANSWER_LIST) as List<Answer>
+			answerList += savedInstanceState.getSerializable(KEY_ANSWER_LIST) as List<AnsweredQuiz>
 			Log.d(TAG, "answerList recovered")
 		}
 		if (answerList.isEmpty()) {
-			initQuizData()
+			val collectionName = intent.getStringExtra(getString(R.string.key_collection_name))?: ""
+			CoroutineScope(job).launch {
+				val answeredQuizzes = getQuizzes(collectionName)
+				withContext(Dispatchers.Main) {
+					for (aq in answeredQuizzes) {
+						answerList += aq.toAnsweredQuiz()
+					}
+					Log.d(TAG, "answerList: $answerList")
+					recyclerViewQuiz.layoutManager = LinearLayoutManager(this@QuizActivity)
+					recyclerViewQuiz.adapter = QuizAdapter(answerList)
+				}
+			}
 			Log.d(TAG, "answerList initialized")
 		}
 
-		recyclerViewQuiz.layoutManager = LinearLayoutManager(this)
-		recyclerViewQuiz.adapter = QuizAdapter(answerList)
-
 		fab.apply {
 			if (Build.VERSION.SDK_INT >= O) {
-				tooltipText = TOOL_TIP_TEXT_SUBMIT
+				tooltipText = getString(R.string.tool_tip_submit)
 			}
 			setOnClickListener {
 				if (!answerList.isCompleted()) {
@@ -67,9 +83,9 @@ class QuizActivity : AppCompatActivity() {
 						setNegativeButton(R.string.cancel) { _, _ -> }
 					}.create().show()
 				}
-			}
-		}
-	}
+			}  // fab.OnClickListener
+		}  // fab.apply
+	}  // onCreate
 
 	override fun onSaveInstanceState(outState: Bundle) {
 		super.onSaveInstanceState(outState)
@@ -81,7 +97,7 @@ class QuizActivity : AppCompatActivity() {
 
 	override fun onCreateOptionsMenu(menu: Menu): Boolean {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		menuInflater.inflate(R.menu.menu_main, menu)
+		menuInflater.inflate(R.menu.menu_quiz, menu)
 		return true
 	}
 
@@ -110,11 +126,22 @@ class QuizActivity : AppCompatActivity() {
 		startActivity(intent)
 	}
 
-	private fun initQuizData() {
-		answerList.apply {
+	private suspend fun getQuizzes(collectionName: String): List<Quiz> {
+		val retrofit = Retrofit.Builder()
+			.baseUrl(getString(R.string.base_url))
+			.addConverterFactory(GsonConverterFactory.create())
+			.build()
+		val collectionService = retrofit.create<CollectionService>()
+		return try {
+			collectionService.getQuizzes(collectionName).await()
+		} catch (e: IOException) {
+			ArrayList(0)
+		}
+
+		/*answerList.apply {
 			repeat(3) {
 				add(
-					Answer(
+					AnsweredQuiz(
 						"“入我相思门，知我相思苦”是谁写的？",
 						arrayListOf("白居易", "杜甫", "李白", "纳兰性德"),
 						2,
@@ -122,7 +149,7 @@ class QuizActivity : AppCompatActivity() {
 					)
 				)
 				add(
-					Answer(
+					AnsweredQuiz(
 						"“相思”与下面哪个词意思相近？",
 						arrayListOf("思念", "思考", "相信"),
 						0,
@@ -130,7 +157,7 @@ class QuizActivity : AppCompatActivity() {
 					)
 				)
 				add(
-					Answer(
+					AnsweredQuiz(
 						"以下哪种物品可以表达相思之情？",
 						arrayListOf("桃花", "牡丹", "绿豆", "红豆"),
 						3,
@@ -138,7 +165,7 @@ class QuizActivity : AppCompatActivity() {
 					)
 				)
 			}
-		}
+		}*/
 	}
 
 }

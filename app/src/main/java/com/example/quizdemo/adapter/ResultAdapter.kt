@@ -11,9 +11,9 @@ import androidx.annotation.Dimension.SP
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.example.quizdemo.R
-import com.example.quizdemo.entity.Answer
+import com.example.quizdemo.entity.AnsweredQuiz
 
-class ResultAdapter(private val answerList: List<Answer>) :
+class ResultAdapter(private val answeredQuizList: List<AnsweredQuiz>) :
 	RecyclerView.Adapter<ResultAdapter.ViewHolder>() {
 
 	companion object {
@@ -38,11 +38,11 @@ class ResultAdapter(private val answerList: List<Answer>) :
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		val realPosition = holder.layoutPosition
 //		Log.i(TAG, answerList[realPosition]::class.java.toString())
-		val answer = answerList[realPosition]
-		Log.i(TAG, answer.toString())
+		val answeredQuiz = answeredQuizList[realPosition]
+		Log.i(TAG, answeredQuiz.toString())
 
 		holder.apply {
-			val questionText = "${realPosition+1}. ${answer.question}"
+			val questionText = "${realPosition+1}. ${answeredQuiz.question}"
 			textViewQuestion.text = questionText
 
 			radioGroupOptions.apply {
@@ -51,7 +51,7 @@ class ResultAdapter(private val answerList: List<Answer>) :
 			}
 
 			// Add choices
-			for (i in answer.optionList.indices) {
+			for (i in answeredQuiz.optionList.indices) {
 				val radioButtonOption = RadioButton(holder.itemView.context).apply {
 //					id = i + 1_000
 					layoutParams = RadioGroup.LayoutParams(
@@ -66,16 +66,16 @@ class ResultAdapter(private val answerList: List<Answer>) :
 					isClickable = false
 
 					setTextSize(SP, 18F)
-					text = answer.optionList[i]
+					text = answeredQuiz.optionList[i]
 
 					// Set button color
-					if (i == answer.correctIndex) {
+					if (i == answeredQuiz.correctIndex) {
 						buttonTintList = AppCompatResources.getColorStateList(
 							holder.itemView.context,
 							R.color.tint_correct
 						)
 						isChecked = true
-					} else if (i == answer.checkedIndex) {
+					} else if (i == answeredQuiz.checkedIndex) {
 						buttonTintList = AppCompatResources.getColorStateList(
 							holder.itemView.context,
 							R.color.tint_checked_wrong
@@ -86,23 +86,23 @@ class ResultAdapter(private val answerList: List<Answer>) :
 				radioGroupOptions.addView(radioButtonOption)
 			}
 
-			val score = if (answer.checkedIndex == answer.correctIndex) {
+			val score = if (answeredQuiz.checkedIndex == answeredQuiz.correctIndex) {
 				1.0
 			} else {
 				0.0
 			}
-			val textCorrect = answer.optionList[answer.correctIndex]
+			val textCorrect = answeredQuiz.optionList[answeredQuiz.correctIndex]
 
 			val textChecked =
-				if (answer.checkedIndex >= 0)
-					answer.optionList[answer.checkedIndex]
+				if (answeredQuiz.checkedIndex >= 0)
+					answeredQuiz.optionList[answeredQuiz.checkedIndex]
 				else
 					itemView.context.getString(R.string.not_answered)
-			val textScore = "本题答案:  $textCorrect\n我的选项:  $textChecked\n本题得分:  $score/1.0"
+			val textScore = "本题答案:  $textCorrect\n我的选项:  $textChecked\n本题得分:  $score / 1.0"
 			textViewScore.text = textScore
 		}
 	}
 
-	override fun getItemCount(): Int = answerList.size
+	override fun getItemCount(): Int = answeredQuizList.size
 
 }

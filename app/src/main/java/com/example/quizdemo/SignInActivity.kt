@@ -1,37 +1,19 @@
 package com.example.quizdemo
 
+import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Toast
 import com.example.quizdemo.SignUpActivity.Companion.KEY_REASON
-import com.example.quizdemo.entity.SignInRequest
-import com.example.quizdemo.entity.SignInResult
-import com.example.quizdemo.entity.SignUpRequest
-import com.example.quizdemo.entity.SignUpResult
-import com.example.quizdemo.service.UserService
+import com.example.quizdemo.util.signIn
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_sign_in.*
 import kotlinx.coroutines.*
-import retrofit2.HttpException
-import retrofit2.Retrofit
-import retrofit2.await
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.create
 
-class SignInActivity : AppCompatActivity() {
+class SignInActivity : BaseActivity() {
 
 	companion object {
-		// For debug use only
-		val DEBUG_RESULT_SUCCESS = SignInResult(
-			true,
-			SignInResult.SUCCESS
-		)
-		val DEBUG_RESULT_WRONG_PASSWORD = SignInResult(
-			false,
-			SignInResult.FAILURE_WRONG_PASSWORD
-		)
-
 		const val KEY_USERNAME = "username"
 		const val KEY_PASSWORD = "password"
 
@@ -40,17 +22,11 @@ class SignInActivity : AppCompatActivity() {
 
 	private val job = Job()
 
+	private lateinit var sharedPref: SharedPreferences
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_sign_in)
-
-		// Recover fields
-		if (savedInstanceState?.containsKey(KEY_USERNAME) == true) {
-			editTextUsername.setText(savedInstanceState[KEY_USERNAME] as String)
-		}
-		if (savedInstanceState?.containsKey(KEY_PASSWORD) == true) {
-			editTextPassword.setText(savedInstanceState[KEY_PASSWORD] as String)
-		}
 
 		buttonSignIn.setOnClickListener {
 			val username = editTextUsername.text.toString()
@@ -70,14 +46,15 @@ class SignInActivity : AppCompatActivity() {
 
 			// Sign in
 			CoroutineScope(job).launch {
-				val signInResult = signIn(username, password)
+				val signInResult = signIn(this@SignInActivity, username, password)
 				withContext(Dispatchers.Main) {
 					if (signInResult.successful) {
+						saveUserData()
 						Toast.makeText(this@SignInActivity,
 							signInResult.reason,
-							Toast.LENGTH_SHORT
+							Toast.LENGTH_LONG
 						).show()
-						startActivity(Intent(this@SignInActivity, MainActivity::class.java))
+						startActivity(Intent(this@SignInActivity, CollectionsActivity::class.java))
 					} else {
 						Toast.makeText(
 							this@SignInActivity,
@@ -94,6 +71,31 @@ class SignInActivity : AppCompatActivity() {
 				signUpIntent.putExtra(KEY_USERNAME, editTextUsername.text.toString())
 			}
 			startActivityForResult(signUpIntent, REQUEST_CODE_SIGN_IN)
+		}
+
+		sharedPref = getSharedPreferences(
+			getString(R.string.key_user_preference),
+			Context.MODE_PRIVATE
+		)
+		if (getString(R.string.key_username) in sharedPref) {
+			val username = sharedPref.getString(getString(R.string.key_username), "")
+			editTextUsername.setText(username)
+		}
+		if (getString(R.string.key_password) in sharedPref) {
+			val password = sharedPref.getString(getString(R.string.key_password), "")
+			editTextPassword.setText(password)
+		}
+		if (editTextUsername.text.toString().isNotBlank() &&
+			editTextPassword.text.toString().isNotBlank()) {
+			buttonSignIn.callOnClick()
+		}
+
+		// Recover fields
+		if (savedInstanceState?.containsKey(KEY_USERNAME) == true) {
+			editTextUsername.setText(savedInstanceState[KEY_USERNAME] as String)
+		}
+		if (savedInstanceState?.containsKey(KEY_PASSWORD) == true) {
+			editTextPassword.setText(savedInstanceState[KEY_PASSWORD] as String)
 		}
 	}
 
@@ -117,9 +119,9 @@ class SignInActivity : AppCompatActivity() {
 						editTextPassword.requestFocus()
 					}
 				}
-			}
-		}
-	}
+			}  // REQUEST_CODE_SIGN_IN
+		}  // when
+	}  // onActivityResult
 
 	override fun onSaveInstanceState(outState: Bundle) {
 		super.onSaveInstanceState(outState)
@@ -138,20 +140,13 @@ class SignInActivity : AppCompatActivity() {
 		job.cancel(null)
 	}
 
-	/**
-	 * Send sign in request to backend server
-	 * @return a `SignInResult` instance
-	 */
-	private suspend fun signIn(username: String, password: String): SignInResult {
-		val retrofit = Retrofit.Builder()
-			.baseUrl(SignUpActivity.BASE_URL)
-			.addConverterFactory(GsonConverterFactory.create())
-			.build()
-		val userService = retrofit.create<UserService>()
-		return try {
-			userService.signIn(SignInRequest(username, password)).await()
-		} catch (e: HttpException) {
-			SignInResult(false, SignInResult.FAILURE_NETWORK)
+	private fun saveUserData() {
+		val username = editTextUsername.text.toString()
+		val password = editTextPassword.text.toString()
+		with (sharedPref.edit()) {
+			putString(getString(R.string.key_username), username)
+			putString(getString(R.string.key_password), password)
+			apply()
 		}
 	}
 

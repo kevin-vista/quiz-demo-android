@@ -1,10 +1,12 @@
 package com.example.quizdemo.service
 
-import com.example.quizdemo.entity.*
+import com.example.quizdemo.entity.SignInRequest
+import com.example.quizdemo.entity.SignInResult
+import com.example.quizdemo.entity.SignUpRequest
+import com.example.quizdemo.entity.SignUpResult
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.POST
-import retrofit2.http.Query
 
 interface UserService {
 

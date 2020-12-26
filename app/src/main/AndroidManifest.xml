@@ -8,33 +8,39 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.QuizDemo"
-        android:networkSecurityConfig="@xml/network_security_config">
-        <activity android:name=".MainActivity">
+        android:theme="@style/Theme.QuizDemo">
+        <activity
+            android:name=".SignInActivity"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
-        <activity android:name=".QuizCollectionActivity" />
         <activity
             android:name=".SignUpActivity"
             android:label="@string/label_sign_up"
             android:parentActivityName=".SignInActivity"
             android:theme="@style/Theme.QuizDemo.NoActionBar" />
-        <activity android:name=".SignInActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
         <activity
-            android:name=".ResultActivity"
-            android:parentActivityName=".QuizActivity" />
+            android:name=".CollectionsActivity"
+            android:label="@string/label_collections"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.QuizDemo.NoActionBar"/>
+        <activity
+            android:name=".ProfileActivity"
+            android:label="@string/label_profile"/>
         <activity
             android:name=".QuizActivity"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.QuizDemo.NoActionBar">
-        </activity>
+            android:label="@string/label_quiz"
+            android:theme="@style/Theme.QuizDemo.NoActionBar" />
+        <activity
+            android:name=".ResultActivity"
+            android:label="@string/label_result"
+            android:parentActivityName=".CollectionsActivity" />
     </application>
 
 </manifest>
